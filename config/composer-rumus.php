@@ -5,6 +5,18 @@ return [
     'route_prefix' => 'reports',
     'middleware' => ['web', 'auth'],
 
+    /* Change to the host layout (for example, `layouts.app`) to use its sidebar. */
+    'layout' => 'composer-rumus::layouts.report',
+    'layout_section' => 'content',
+
+    /* Labels used by the sidebar partial. Set `sidebar.enabled` to false to hide it. */
+    'sidebar' => [
+        'enabled' => true,
+        'title' => 'Reports',
+        'invoice_label' => 'Invoice Report',
+        'cash_label' => 'Invoice Cash Report',
+    ],
+
     /*
      * Point these to models in the application that installs this package.
      * They must be Eloquent models using the columns listed below.

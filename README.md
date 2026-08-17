@@ -9,7 +9,7 @@ It **does not create an invoice system or database schema**. The host applicatio
 After publishing this repository to Packagist, install it in a Laravel project:
 
 ```bash
-composer require your-vendor/composer-rumus
+composer require kyawgyi/rumus
 php artisan vendor:publish --tag=composer-rumus-config
 ```
 
@@ -25,6 +25,39 @@ The default URLs are:
 - `/reports/invoice-cash`
 
 Change the prefix, middleware, host model classes, relationship method names, database columns, and permission fields in `config/composer-rumus.php`.
+
+## Add the reports to the host layout/sidebar
+
+The package discovers itself after `composer require kyawgyi/rumus`, so its routes are available immediately. To show the report pages inside the host layout (including its existing navbar/sidebar), set the layout and section in the published config:
+
+```php
+// config/composer-rumus.php
+'layout' => 'layouts.app', // replace with the host application's layout view
+'layout_section' => 'content',
+```
+
+A Composer package cannot automatically modify a host application's sidebar because each application uses a different layout and HTML structure. Add this **once** in the host application's existing sidebar Blade file (for example, `resources/views/layouts/sidebar.blade.php`):
+
+```blade
+@include('composer-rumus::components.sidebar')
+```
+
+The partial creates links using the package route names, so it continues to work when `route_prefix` is changed. It also adds the `active` class to the current report link. Style the four `composer-rumus-sidebar-*` classes in the host application's CSS, or copy the two links into the existing menu format:
+
+```blade
+<li class="{{ request()->routeIs('composer-rumus.invoice.*') ? 'active' : '' }}">
+    <a href="{{ route('composer-rumus.invoice.index') }}">Invoice Report</a>
+</li>
+<li class="{{ request()->routeIs('composer-rumus.cash.*') ? 'active' : '' }}">
+    <a href="{{ route('composer-rumus.cash.index') }}">Invoice Cash Report</a>
+</li>
+```
+
+Change the menu labels or disable the supplied partial in the published `composer-rumus.php` configuration. To customize report or sidebar markup, publish the views and edit the copies in the host project:
+
+```bash
+php artisan vendor:publish --tag=composer-rumus-views
+```
 
 ## Host application contract
 

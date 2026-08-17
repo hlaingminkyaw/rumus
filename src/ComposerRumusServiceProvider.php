@@ -22,5 +22,10 @@ class ComposerRumusServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../config/composer-rumus.php' => config_path('composer-rumus.php'),
         ], 'composer-rumus-config');
+
+        // Optional: lets an application override the package report and menu views.
+        $this->publishes([
+            __DIR__.'/../resources/views' => resource_path('views/vendor/composer-rumus'),
+        ], 'composer-rumus-views');
     }
 }

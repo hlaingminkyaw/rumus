@@ -1,5 +1,5 @@
 {
-  "name": "your-vendor/composer-rumus",
+  "name": "kyawgyi/rumus",
   "description": "Reusable Laravel invoice and invoice-cash reports for existing POS applications.",
   "keywords": ["laravel", "reports", "invoice", "cash", "pos"],
   "license": "MIT",

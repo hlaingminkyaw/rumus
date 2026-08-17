@@ -2,13 +2,16 @@
 
 namespace ComposerRumus;
 
-use IlluminateSupportServiceProvider;
+use Illuminate\Support\ServiceProvider;
 
 class ComposerRumusServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/composer-rumus.php', 'composer-rumus');
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/composer-rumus.php',
+            'composer-rumus'
+        );
     }
 
     public function boot(): void

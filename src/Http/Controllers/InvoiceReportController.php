@@ -79,7 +79,6 @@ class InvoiceReportController extends Controller
 
     private function permittedBranches(Request $request): array
     {
-        $branches = json_decode((string) data_get($request->user(), config('composer-rumus.permission_field'), '[]'), true);
-        return is_array($branches) ? $branches : [];
+        return HostModel::permittedBranches($request->user());
     }
 }

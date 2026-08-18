@@ -103,8 +103,7 @@ class InvoiceCashReportController extends Controller
     private function applyBranchScope($query, Request $request): void
     {
         if ($this->isAdmin($request)) return;
-        $branches = json_decode((string) data_get($request->user(), config('composer-rumus.permission_field'), '[]'), true);
-        $permitted = is_array($branches) ? $branches : [];
+        $permitted = HostModel::permittedBranches($request->user());
         $query->whereIn(config('composer-rumus.columns.invoice_branch'), $permitted ?: [-1]);
     }
 

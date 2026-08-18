@@ -58,6 +58,33 @@ class HostModel
         )));
     }
 
+    /**
+     * Reads the permitted warehouse ids from the signed-in user. The field is a
+     * JSON list in some applications and a single id in others, so both are
+     * accepted and always returned as a list.
+     */
+    public static function permittedBranches($user): array
+    {
+        $value = data_get($user, config('composer-rumus.permission_field'));
+
+        if (is_array($value)) {
+            return array_values($value);
+        }
+
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        $decoded = json_decode((string) $value, true);
+
+        if (is_array($decoded)) {
+            return array_values($decoded);
+        }
+
+        // A single stored id, for example "4".
+        return [$decoded ?? $value];
+    }
+
     private static function message(string $key, string $class): string
     {
         return sprintf(

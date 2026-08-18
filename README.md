@@ -9,9 +9,45 @@ It **does not create an invoice system or database schema**. The host applicatio
 After publishing this repository to Packagist, install it in a Laravel project:
 
 ```bash
-composer require kyawgyi/rumus
+composer require kyawgyi/rumus --prefer-dist
 php artisan vendor:publish --tag=composer-rumus-config
 ```
+
+### Install footprint
+
+The package requires only `php` and `illuminate/support`, which every Laravel
+application already has. It declares **no development dependencies**, and the
+`.gitattributes` file keeps `tests/`, `docs/`, and CI files out of the Packagist
+archive, so `composer require kyawgyi/rumus` downloads this package alone and no
+extra vendor packages.
+
+### Troubleshooting `HTTP/2 429` download errors
+
+An install that stops with lines such as:
+
+```
+Failed to download symfony/polyfill-mbstring from dist: ... (HTTP/2 429)
+Source fallback is disabled. Not trying alternative sources.
+```
+
+is GitHub rate limiting anonymous downloads from `codeload.github.com`. Those
+packages (PHPUnit, Symfony polyfills, spatie/ignition, and so on) belong to the
+host application, not to this package, so nothing here can skip them. Fix it in
+the host project with one of these:
+
+```bash
+# 1. Authenticate Composer once. This removes the anonymous rate limit.
+composer config --global github-oauth.github.com <your-github-token>
+
+# 2. Install runtime packages only, from dist archives.
+composer install --no-dev --prefer-dist
+
+# 3. Retry after a rate-limit window, reusing anything already downloaded.
+composer install --prefer-dist
+```
+
+Avoid `--prefer-source` here: it clones every package over Git and multiplies the
+requests that trigger the 429 response.
 
 Laravel package discovery registers the routes and views automatically. Clear cached configuration after editing the published configuration:
 
@@ -90,4 +126,5 @@ Use a Packagist webhook after the first submission so every new Git tag becomes 
 - `src/Http/Controllers`: invoice, cash, and expense-detail queries.
 - `resources/views/reports`: portable report pages with date filters and summaries.
 - `config/composer-rumus.php`: host-application integration contract.
-- `docs/REPORT_FLOWS.md`: functional report-flow summary.
+- `docs/REPORT_FLOWS.md`: functional report-flow summary (excluded from the installed archive).
+- `.gitattributes`: keeps development files out of the Composer download.

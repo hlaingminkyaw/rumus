@@ -3,6 +3,7 @@
 namespace ComposerRumus\Http\Controllers;
 
 use Carbon\Carbon;
+use ComposerRumus\Support\HostModel;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
@@ -36,23 +37,32 @@ class InvoiceCashReportController extends Controller
     private function render(Request $request, Carbon $start, Carbon $end)
     {
         $columns = config('composer-rumus.columns');
-        $paymentClass = config('composer-rumus.models.payment');
-        $invoiceRelation = config('composer-rumus.relations.payment_invoice');
-        $transactionRelation = config('composer-rumus.relations.payment_transaction');
+        $paymentClass = HostModel::resolve('payment');
+        $invoiceRelation = HostModel::relation('payment_invoice');
+        $transactionRelation = HostModel::relation('payment_transaction');
 
-        $payments = $paymentClass::query()
+        $query = $paymentClass::query()
             ->whereBetween($columns['payment_date'], [$start, $end])
             ->where(function ($query) use ($columns, $transactionRelation) {
                 $query->where($columns['payment_amount'], '>', 0)
-                    ->orWhere($columns['payment_method'], 'Credit')
-                    ->orWhereHas($transactionRelation, fn ($transaction) => $transaction->whereIn('transaction_name', ['Credit', 'INV-Credit']));
-            })
-            ->whereHas($invoiceRelation, function ($invoice) use ($columns, $request) {
+                    ->orWhere($columns['payment_method'], 'Credit');
+
+                // Only applies when the host payment model exposes a transaction relation.
+                if ($transactionRelation !== null) {
+                    $query->orWhereHas($transactionRelation, fn ($transaction) => $transaction->whereIn('transaction_name', ['Credit', 'INV-Credit']));
+                }
+            });
+
+        if ($invoiceRelation !== null) {
+            $query->whereHas($invoiceRelation, function ($invoice) use ($columns, $request) {
                 $invoice->where($columns['invoice_status'], config('composer-rumus.invoice_status_value'))
                     ->where($columns['invoice_balance_due'], config('composer-rumus.invoice_balance_due_value'));
                 $this->applyBranchScope($invoice, $request);
-            })
-            ->with([$transactionRelation, config('composer-rumus.relations.payment_customer')])
+            });
+        }
+
+        $payments = $query
+            ->with(HostModel::eagerLoad('payment_transaction', 'payment_customer'))
             ->orderByDesc($columns['payment_date'])
             ->get();
 
@@ -85,9 +95,9 @@ class InvoiceCashReportController extends Controller
 
     private function expenses(Carbon $start, Carbon $end)
     {
-        $class = config('composer-rumus.models.expense');
+        $class = HostModel::resolve('expense');
         return $class::query()->whereBetween(config('composer-rumus.columns.expense_date'), [$start, $end])
-            ->with([config('composer-rumus.relations.expense_transaction'), config('composer-rumus.relations.expense_warehouse')])->get();
+            ->with(HostModel::eagerLoad('expense_transaction', 'expense_warehouse'))->get();
     }
 
     private function applyBranchScope($query, Request $request): void

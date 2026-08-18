@@ -95,6 +95,58 @@ Change the menu labels or disable the supplied partial in the published `compose
 php artisan vendor:publish --tag=composer-rumus-views
 ```
 
+## Configure it for your application
+
+The defaults describe the application this package was extracted from, so the
+first request after installing usually reports a class that does not exist:
+
+```
+Class "App\Models\MakePayment" not found
+```
+
+That means `config/composer-rumus.php` still names a model your application does
+not have. Publish the config, point each entry at your own model, and clear the
+cache:
+
+```bash
+php artisan vendor:publish --tag=composer-rumus-config
+php artisan optimize:clear
+```
+
+```php
+'models' => [
+    'invoice' => 'App\Models\Invoice',
+    'payment' => 'App\Models\Payment',   // whatever your payment model is called
+    'expense' => 'App\Models\Expense',
+    'warehouse' => 'App\Models\Warehouse',
+],
+```
+
+### Relations your application does not have
+
+The reports group payments and expenses through a `transaction` relation and
+eager load `customer`, `creator`, and `warehouse` on invoices. Applications
+without those relations set the entry to `null`, and the report skips it rather
+than failing:
+
+```php
+'relations' => [
+    'payment_invoice' => 'invoice',
+    'payment_transaction' => null,        // no transaction relation on Payment
+    'payment_customer' => 'invoice.customer',
+    'expense_transaction' => null,
+    'expense_warehouse' => null,
+    'invoice_with' => ['customer'],       // only the relations that exist
+],
+```
+
+With `payment_transaction` set to `null`, payments are grouped by the
+`payment_method` column instead. With `expense_transaction` set to `null`,
+expenses are grouped by the expense `name` column.
+
+Also check the `columns` block: it must name real columns in your tables, for
+example `expense_amount` is `amount_mmk` by default but is often just `amount`.
+
 ## Host application contract
 
 The default configuration matches this repository. A host application must supply:

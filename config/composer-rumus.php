@@ -19,22 +19,31 @@ return [
 
     /*
      * Point these to models in the application that installs this package.
-     * They must be Eloquent models using the columns listed below.
+     * They must be Eloquent models using the columns listed below. Every value
+     * is required: the reports fail with an explanatory message if one is wrong.
      */
     'models' => [
-        'invoice' => App\Models\Invoice::class,
-        'payment' => App\Models\MakePayment::class,
-        'expense' => App\Models\Expense::class,
-        'warehouse' => App\Models\Warehouse::class,
+        'invoice' => 'App\\Models\\Invoice',
+        'payment' => 'App\\Models\\MakePayment',
+        'expense' => 'App\\Models\\Expense',
+        'warehouse' => 'App\\Models\\Warehouse',
     ],
 
-    /* Relation method names on the installed application's models. */
+    /*
+     * Relation method names on the installed application's models. Set a value
+     * to null when the application has no such relation; the reports then skip
+     * it instead of failing, and fall back to the payment_method and expense
+     * name columns for grouping.
+     */
     'relations' => [
         'payment_invoice' => 'invoice',
         'payment_transaction' => 'transaction',
         'payment_customer' => 'invoice.customer',
         'expense_transaction' => 'transaction',
         'expense_warehouse' => 'warehouse',
+
+        /* Relations eager loaded for each row of the invoice report. */
+        'invoice_with' => ['customer', 'creator', 'warehouse'],
     ],
 
     /* Change these only if the host application uses different database columns. */

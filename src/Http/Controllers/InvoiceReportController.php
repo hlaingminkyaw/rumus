@@ -3,6 +3,7 @@
 namespace ComposerRumus\Http\Controllers;
 
 use Carbon\Carbon;
+use ComposerRumus\Support\HostModel;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
@@ -27,7 +28,7 @@ class InvoiceReportController extends Controller
     private function render(Request $request, Carbon $start, Carbon $end)
     {
         $columns = config('composer-rumus.columns');
-        $invoiceClass = config('composer-rumus.models.invoice');
+        $invoiceClass = HostModel::resolve('invoice');
         $branch = $request->input('branch');
         $query = $invoiceClass::query()
             ->whereBetween($columns['invoice_created_at'], [$start, $end])
@@ -35,7 +36,8 @@ class InvoiceReportController extends Controller
             ->where($columns['invoice_balance_due'], config('composer-rumus.invoice_balance_due_value'));
 
         $this->applyBranchScope($query, $request, $branch);
-        $invoices = $query->with(['customer', 'creator', 'warehouse'])->orderByDesc($columns['invoice_created_at'])->get();
+        $invoices = $query->with(HostModel::relationList('invoice_with', ['customer']))
+            ->orderByDesc($columns['invoice_created_at'])->get();
         $warehouses = $this->warehouses();
 
         return view('composer-rumus::reports.invoice', [
@@ -64,7 +66,7 @@ class InvoiceReportController extends Controller
 
     private function warehouses()
     {
-        $class = config('composer-rumus.models.warehouse');
+        $class = HostModel::resolve('warehouse');
         return $class::query()->orderBy('name')->get();
     }
 
